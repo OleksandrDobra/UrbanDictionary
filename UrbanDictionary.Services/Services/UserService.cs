@@ -14,5 +14,11 @@ namespace UrbanDictionary.BussinessLayer.Services
         {
             _repoWrapper = repoWrapper;
         }
+
+        public User GetByUsername(string username)
+        {
+            return _repoWrapper.User.FindByCondition(i => i.UserName == username)?.FirstOrDefault();
+        }
+
     }
 }

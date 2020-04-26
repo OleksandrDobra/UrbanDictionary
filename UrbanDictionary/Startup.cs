@@ -11,6 +11,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using System;
 using UrbanDictionary.BussinessLayer.DTO;
 using UrbanDictionary.BussinessLayer.DTO.Mapper;
 using UrbanDictionary.BussinessLayer.Services;
@@ -43,6 +44,39 @@ namespace UrbanDictionary
                     .AddEntityFrameworkStores<UrbanDictionaryDBContext>()
                     .AddDefaultTokenProviders();
 
+            services.Configure<IdentityOptions>(options =>
+            {
+                // Password settings.
+                options.Password.RequireDigit = true;
+                options.Password.RequireLowercase = true;
+                options.Password.RequireNonAlphanumeric = true;
+                options.Password.RequireUppercase = true;
+                options.Password.RequiredLength = 6;
+                options.Password.RequiredUniqueChars = 1;
+
+                // Lockout settings.
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+                options.Lockout.MaxFailedAccessAttempts = 5;
+                options.Lockout.AllowedForNewUsers = true;
+
+                // User settings.
+                options.User.AllowedUserNameCharacters =
+                "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
+                options.User.RequireUniqueEmail = false;
+            });
+
+            services.ConfigureApplicationCookie(options =>
+            {
+                // Cookie settings
+                options.Cookie.HttpOnly = true;
+                options.ExpireTimeSpan = TimeSpan.FromMinutes(5);
+
+                options.LoginPath = "/Identity/Account/Login";
+                options.AccessDeniedPath = "/Identity/Account/AccessDenied";
+                options.SlidingExpiration = true;
+            });
+
+
             //services.AddScoped<IRepositoryWrapper, RepositoryWrapper>();
 
             services.AddControllersWithViews();
@@ -53,9 +87,9 @@ namespace UrbanDictionary
                 configuration.RootPath = "ClientApp/dist";
             });
 
-            services.AddSwaggerGen(c => 
+            services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "UrbanDictionary API", Version = "v1"}); 
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "UrbanDictionary API", Version = "v1" });
             });
         }
 
@@ -66,6 +100,8 @@ namespace UrbanDictionary
             builder.RegisterType<WordServiceMapper>().As<IMapper<Word, WordDTO>>();
             builder.RegisterType<TagServiceMapper>().As<IMapper<Tag, TagDTO>>();
         }
+
+
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -89,6 +125,8 @@ namespace UrbanDictionary
             }
 
             app.UseRouting();
+
+            app.UseAuthentication();
 
             app.UseEndpoints(endpoints =>
             {
